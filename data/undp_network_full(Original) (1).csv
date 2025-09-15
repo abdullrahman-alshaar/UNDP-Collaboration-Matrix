@@ -1,0 +1,50 @@
+﻿Agency,Pillar,Weight,Activities,ActivitiesAgency,ActivitiesUNDP
+UNICEF,P1,2,Joint school recovery,Curriculum & teacher training; Child-friendly spaces,"School infrastructure (primary, secondary, TVET); Education support"
+UNICEF,P2,1,Joint school recovery,Curriculum & teacher training; Child-friendly spaces,Communal safe spaces
+UNICEF,P3,2,WASH rehab with solar/efficiency,Drinking water; Sanitation kits,Water infra upgrades; Solar pumping
+UNICEF,P2,5,Access to justice,Legal awareness; CDR facilitation; Protection & child justice,Legal services; Justice infra; Digital platforms; Women’s access; Community mediation
+UNICEF,P1,4,Social protection & poverty reduction,Child poverty; Disability inclusion; Child expenditure mgmt,SP systems; Poverty reduction; Disability inclusion; PFM on child expenditure
+UNICEF,P1,4,Youth & skills development,MSME/start-up support; Entrepreneurship; Vocational training; GenU initiatives,MSME/entrepreneurship; Youth engagement; Digital/peacebuilding; Public finance mgmt; GenU
+UNICEF,P2,2,Youth & child protection,Child protection; Returnee reintegration,Online exploitation prevention; Returnee support & reintegration
+UNICEF,P1,7,Poverty & social inclusion,Poverty measurement; SP referral pathways; Disability inclusion; Youth empowerment; Cash transfers; CivicTech4Youth; Digital Peace Ambassadors,Poverty systems & policy; SP governance; Disability strategy & DIWG; MSME/start-up pipeline; Cash–LH coordination; Youth digital innovation; Peace nexus support
+UNICEF,P2,7,Governance & justice,Legal awareness; CDR; Juvenile justice; Protection advocacy; PFM evidence; Child indicators in M&E; Child online safety,Court rehab; Mobile legal units; Digital legal aid; Justice provider capacity; Legal advocacy/system design; PFM co-lead; M&E rollout; Child protection platforms; Mine/UXO advocacy
+UNICEF,P3,5,"WASH, energy & climate resilience",Water/sewage assessments; WASH staff e-learning; Climate risk mapping; Water supply rehab; Resilience planning,"Basin assessments; Water sector strategy; Institutional capacity; Early warning & adaptation fund; Energy for WASH (Tabqa, Babiri, solar)"
+WFP,P1,4,Food-for-Assets Projects,Food Distribution; Livelihoods Support; Employment; Value Chain,Assets Creation; Livelihoods Economic Support; Job Creation; Value Chain Assessments
+WFP,P1,2,Infrastructure Rehabilitation,Bakeries Rehabilitation;,Market Rehabilitation; Bakeries Rehabilitation; Value Chain Re-vitalization
+WFP,P2,2,Social Protection,Social Safety nets; poverty reduction,Poverty Reduction; Social Safety nets; VSLA
+WHO,P3,4,Medical Equipment,Health Facility service recovery,Health Facility rehabilitation; solar energy assets; medical-waste management systems; medica equipment provision
+WHO,P2,1,Capacity Building for health workers,Healthcare Systems enhancement; capacity building,Health Systems strenghtening
+UNHCR,P1,5,Returnees & Refugees Economic Support,"Returnees & Refugees livelihood support, TVET initiatives",MSME/entrepreneurship support; youth engagement; job creation; TVET grants; TVET centers support
+UNHCR,P2,7,Access to Justice,Legal Counseling; Legal Awareness raising; legal interventions (HLP - protection - Civil Documentation),Legal services; justice infrastructure; digital platforms; women’s access to justice; community mediation; legal aid; HLP rights
+UNHCR,P1,4,Micro-Finance for returnees and host communities,Support to micro & small businesses; Entrepreneurship and business development training; access to financial services,MSMEs grants; access to concessional lending; grant schemes & business grants; re-vitalization of crisis-affected markets and MSMEs; Value Chain support
+UNHCR,P1,3,Community Centers,Shared Community Centers; TVET programmes,TVET programmes; Job Creation; UNDP economic empowerment centers for livelihoods and income support
+UNHCR,P1,3,Eduction,Schools rehabilitation; curriculum development; TVET programmes,Education Support; rehabilitation of damaged schools; TVET and Curriculum Revamping
+UNHCR,P2,3,Return and Integration,Area-based return support; social cohesion; re-integration,capacity-building on reintegration; community-based social cohesion; conflict and context analysis
+UNFPA,P1,3,Youth Prgrammes,Youth development; employment; women access to finance,youth empowerment programmes; youth job creation; statistical support on population census
+UNFPA,P3,1,"safe spaces, GBV and RH",Facility upgrades,facility rehabilitaiton and upgrades
+FAO,P1,3,rural livelhoods,Agricultural business grants,agribusiness incubation; market/chain revitalization
+FAO,P3,3,Irrigation & rural livelihoods,"Agricultural inputs, climate-smart practices",Solar water pumps; irrigation rehabilitation; agricultural infrastructure rehabilitation
+FAO,P3,3,Land degradation & biodiversity,"Conservation, disaster response",land restoration; biodiversity protection; land conservation
+FAO,P3,6,Water resources & climate resilience,"Composting, biogas; smart agriculture; early warning systems;",Climate resilience; water resource management; sustainable agriculture; smart agriculture; climate change assessments; disaster response smart systems
+UNHABITAT,P1,1,Neighbourhood Recovery,urban recovery; urban planning,re-vitalization of crisis-affected markets; 
+UNHABITAT,P2,1,Neighbourhood Recovery,HLP Support,HLP Rights support
+UNHABITAT,P3,3,Neighbourhood Recovery,Infrastructure rehabilitaiton,road rehabilitation; local basic infrastructure; electricity recovery
+IOM,P1,2,Returness integration,Shelter; WASH and mobility,Livelihoods and MSMEs grants; community services rehabilitation
+IOM,P2,2,Conflict Sensitivity,context sensitivity,Context and Conflict sensitivity; field staff training
+ILO,P1,11,Skills Development & Descent work;,vocational training; sector upgrading; job creation; enterprise development,business financing; social enterprises support; market access; jobs creation; active labour market; revitalization of crisis-affected markets & MSMEs; private sector development; labour market information system; agricultural MSMEs support; TVET assessments and mapping; TVET WG co-chairing
+ILO,P1,1,Social Protection,Poverty Reduction,Poverty reduction; financial inclusion
+UN-WOMEN,P2,5,Women Empowerment,Participation in peace-building processes; increased access to financial resources; poltical particiaption of women,Legal reform; women in justice systems; gender responsive services; women rights; legal counseling
+UNRWA,P1,4,PRS camp services; Livelihoods support; TEVT; Disability inclusion,"Education, health, relief in camps",Camp infrastructure upgrades; Livelihoods for PRS youth/women
+UNRWA,P2,1,Conflict Sensitivity support,Early recovery programme; staff training on conflict sensitivity,Ongoing integration of conflict sensitivity into programming
+UNOPS,P1,3, Infrastructure rehabilitation; TVET infrastructure,Engineering and procurement,TVET programmes; TVET Infrastructure
+UNOPS,P3,3,Facility solarization;,Engineering and procurement,infrastructure rehabilitation; energy systems; WASH services
+UNESCO,P1,3,Cultural heritage & education; Livelihoods and Jobs; Education & Higher Education support,Teacher training; Heritage site restoration; Youth development,Livelihoods and Jobs creation; re-activation of old markets; youth employment and development
+UNESCO,P2,1,Cultural heritage & education; Livelihoods and Jobs; Education & Higher Education support,Teacher training; Heritage site restoration;,Higher Education systems (Syrian Virtual University);
+UNMAS,P2,3,Policy & Advocacy,"Advocacy for Syria to join APMBC, CCM, CCW, EWIPA; Promote protection of civilians; Human rights integration","Advocate integration of mine action into sustainable development; Support legal review & accession processes; Joint advocacy on policy reforms (e.g. debris law, awareness campaigns)"
+UNMAS,P2,2,Assessment & Planning,"Mine action planning; Prioritization of contaminated sites (schools, health, WASH, irrigation)","Coordinate targeted plans; Request risk assessments; Joint planning for debris removal, awareness, and bankmen deployment"
+UNMAS,P1,2,UXO & Debris Management,Survey & clearance; UXO/debris handling standards,Train debris workers in mine risk; Coordinate safe clearance before rehabilitation works
+UNMAS,P1,3,Mine/UXO Awareness,Community-based MRE; Training of Trainers; Awareness for farmers & vulnerable groups,Implement MRE since 2020; Support HLP protection; Deliver awareness for farmers & communities
+UNMAS,P2,2,HLP Safeguards,Promote HLP due diligence in mine action,Jointly developed HLP Guidance Note; Integrate safeguards into clearance & awareness
+UNMAS,P1,2,Reintegration for Returnees,Provide data & assessments for affected communities,Use ABRS to identify communities; Support needs assessment & reintegration targeting
+UNMAS,P1,3,Victim Assistance,Provide assistive devices & services to victims,Deliver assistive products; Support microbusiness grants; Strengthen livelihood resilience
+UNIDO,P1,8,Industrial recovery & Sector strategies;,Industrial recovery programmes; Sector strategies; TVET & skills training; Export facilitation; Certification labs,Industrial recovery; Sector strategies; Value chains; TEVT & skills; Export/certification labs; Private sector/MSMEs; Trade/market integration; Youth/entrepreneurship

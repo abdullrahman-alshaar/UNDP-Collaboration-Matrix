@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UNDP Syria – Aggregated Collaboration Network</title>
+  <style>
+    /*
+      This page provides an aggregated version of the original weighted
+      chord chart.  Rather than drawing one line for every row in your
+      CSV (which quickly becomes overwhelming), the script groups all
+      rows by Agency and Pillar.  For each Agency×Pillar combination it
+      collects a unique set of activities and roles, and uses the
+      number of unique activities as the weight for the line.  The
+      result is a cleaner network: UNDP sits at the centre, a single
+      coloured line connects to each agency for each pillar, and
+      tooltips list all aggregated activities and roles.  Filters for
+      pillars and agencies work as before.
+
+      To use your own data, prepare a CSV/Excel file with the columns
+      `Agency,Pillar,Activities,ActivitiesAgency,ActivitiesUNDP`.  The
+      `Weight` column is ignored because weights are computed from the
+      number of unique activities.  Each list of activities or roles
+      should be separated by semicolons.  Upload the file via the
+      Choose File button below.
+    */
+    :root {
+      --bg: #0b1220;
+      --card: #121a2b;
+      --muted: #93a1c6;
+      --text: #e8eefc;
+      --p1: #4e79a7; /* Socioeconomic Recovery and Social Cohesion */
+      --p2: #59a14f; /* Governance, Rule of Law and Peacebuilding */
+      --p3: #f28e2b; /* Climate, Energy & Natural Resource Management */
+    }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% 10%, #17243f 0%, #0b1220 60%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+      padding:24px;
+    }
+    .wrap { width: min(1200px, 96vw); }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 14px 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    h1 { font-size: clamp(20px, 3.2vw, 28px); margin: 0 0 6px 0; letter-spacing:.3px; }
+    p { color: var(--muted); margin: 4px 0 10px; }
+    #controls { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items:start; }
+    fieldset { border: 1px solid rgba(255,255,255,.12); border-radius: 12px; padding: 10px 12px; }
+    legend { color:#dfe7ff; opacity:.9; padding: 0 6px; font-size: 12px; }
+    .pillars { display:flex; gap:14px; flex-wrap:wrap; }
+    .badge { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); font-size: 12px; color:#dfe7ff; }
+    .dot { width:10px; height:10px; border-radius:50%; background:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.25) inset; }
+    .agency-list { max-height: 160px; overflow:auto; display:grid; grid-template-columns: repeat(2, minmax(150px, 1fr)); gap: 6px 12px; }
+    .agency-list label { font-size: 13px; opacity:.95; }
+    .actions { display:flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    button { background:#1f2c4e; border:1px solid rgba(255,255,255,.18); color:#e8eefc; border-radius:10px; padding:6px 10px; cursor:pointer; }
+    button:hover { filter: brightness(1.06); }
+    #chart { width:100%; height: 680px; }
+    .tooltip {
+      position: fixed;
+      pointer-events:none;
+      z-index: 10;
+      background: #0b1220;
+      border: 1px solid rgba(255,255,255,.15);
+      padding: 8px 10px;
+      border-radius:10px;
+      color:#e9f0ff;
+      font-size:12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,.35);
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .12s ease, transform .12s ease;
+      white-space: normal;
+      max-width: 380px;
+    }
+    .node text { font-size: 12px; fill: #e9f0ff; }
+    .node circle { fill: #1a2540; stroke: rgba(255,255,255,.18); stroke-width:1; }
+    .node.central circle { fill: #24345e; stroke: #9fb4ff; stroke-width: 1.2; }
+    .link { fill: none; stroke-linecap: round; opacity: .9; }
+    .dim { opacity: .08; }
+    code { background: rgba(255,255,255,.06); padding: 1px 4px; border-radius: 4px; }
+
+    /* When the page is in collapsed mode, hide the control panel to free up vertical space */
+    body.collapsed .controls-container {
+      display: none;
+    }
+  </style>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <div class="wrap card">
+    <h1>UNDP Syria – Aggregated Collaboration Network</h1>
+    <p>
+      UNDP is centered; each coloured line connects UNDP to a UN agency.
+      Line thickness reflects the number of unique UNDP activities
+      overlapping in that pillar and agency.  Hover on a line to see the
+      count of overlapping UNDP activities and a breakdown by
+      thematic areas (derived from your <code>Activities</code> column),
+      followed by the aggregated agency and UNDP roles.  Use the
+      filters below to explore the pre‑loaded dataset.
+    </p>
+    <!-- Toggle button to collapse/expand the control panel -->
+    <button id="toggleControls" style="margin-bottom: 8px; background:#24345e; border:1px solid rgba(255,255,255,.2); color:#e8eefc; border-radius:8px; padding:4px 8px; cursor:pointer; font-size:12px;">
+      Hide controls
+    </button>
+    <div id="controls" class="controls-container">
+      <!-- Data loader removed: dataset is pre‑loaded from a static CSV. -->
+      <fieldset>
+        <legend>Pillar filter</legend>
+        <div class="pillars">
+          <label class="badge"><span class="dot" style="background:var(--p1)"></span><input type="checkbox" id="p1" checked /> P1 Socioeconomic Recovery & Social Cohesion</label>
+          <label class="badge"><span class="dot" style="background:var(--p2)"></span><input type="checkbox" id="p2" checked /> P2 Governance, Rule of Law and Peacebuilding</label>
+          <label class="badge"><span class="dot" style="background:var(--p3)"></span><input type="checkbox" id="p3" checked /> P3 Climate, Energy & Natural Resource Management</label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Agency filter</legend>
+        <div class="agency-list" id="agencyList"></div>
+        <div class="actions">
+          <button id="selectAll">Select all</button>
+          <button id="selectNone">Select none</button>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+  <div id="chart" class="wrap card"></div>
+  <div id="tooltip" class="tooltip"></div>
+  <script>
+  // ----------------------------------------
+  // Aggregated Collaboration Network
+
+  // Demo agencies list used on initial load; replaced by file data
+  let agencies = [
+    { name: "UNICEF" }, { name: "WFP" }, { name: "WHO" }, { name: "UNHCR" }, { name: "UNFPA" },
+    { name: "FAO" }, { name: "UN-Habitat" }, { name: "IOM" }, { name: "ILO" }, { name: "UNRWA" }
+  ];
+  // Demo raw rows used on initial load; replaced when a file is loaded
+  let rawRows = [
+    { a: "UNICEF", pillar: "P1", activities: ["School WASH systems","Child protection-friendly spaces","Education service quality"], actAgency:["Curriculum","Teacher training"], actUNDP:["Infrastructure rehab","Safe spaces"] },
+    { a: "UNICEF", pillar: "P2", activities: ["Adolescent skills","Cash/social protection linkages"], actAgency:["Life skills"], actUNDP:["MSME/startup pipeline"] },
+    { a: "UNICEF", pillar: "P3", activities: ["Solar water for schools"], actAgency:["Water access in schools"], actUNDP:["Solar pumping"] },
+    { a: "WFP", pillar: "P1", activities: ["Community assets that support services"], actAgency:["Food for workers"], actUNDP:["Asset creation"] },
+    { a: "WFP", pillar: "P2", activities: ["Food-for-Assets","Resilience grants","Market rehabilitation"], actAgency:["Food/cash assistance"], actUNDP:["Market/storage rehab"] },
+    { a: "WHO", pillar: "P1", activities: ["PHC rehab","Supply of essential medicines"], actAgency:["Medicines & kits","Training"], actUNDP:["Facility rehab"] },
+    { a: "WHO", pillar: "P3", activities: ["Solarization","Biomedical waste management"], actAgency:["Technical standards"], actUNDP:["Solar/BMW systems"] },
+    { a: "UNHCR", pillar: "P1", activities: ["Shelter upgrades","Basic services for returns"], actAgency:["Shelter kits","HLP/legal"], actUNDP:["Utility/service rehab"] },
+    { a: "UNHCR", pillar: "P2", activities: ["Livelihoods for returnees"], actAgency:["Protection casework"], actUNDP:["Grants/skills"] },
+    { a: "UNHCR", pillar: "P3", activities: ["Utilities for safe returns"], actAgency:["Return monitoring"], actUNDP:["Energy/Water"] },
+    { a: "UNFPA", pillar: "P1", activities: ["SRH services","GBV safe spaces"], actAgency:["RH kits","Case management"], actUNDP:["Centers upgrade"] },
+    { a: "UNFPA", pillar: "P2", activities: ["Women/youth skills & empowerment"], actAgency:["Training"], actUNDP:["Enterprise hubs"] },
+    { a: "FAO", pillar: "P2", activities: ["Agrifood value chains","Livelihoods grants"], actAgency:["Inputs/TA"], actUNDP:["Incubation/finance"] },
+    { a: "FAO", pillar: "P3", activities: ["Solar irrigation","Watershed/NRM"], actAgency:["Agro TA"], actUNDP:["Infra/solar pumps"] },
+    { a: "UN-Habitat", pillar: "P1", activities: ["Urban service rehab","Participatory planning","HLP-sensitive upgrading"], actAgency:["Urban planning"], actUNDP:["Capex/service works"] },
+    { a: "UN-Habitat", pillar: "P2", activities: ["Area-based recovery","Public space/market revival"], actAgency:["Neighborhood approach"], actUNDP:["Public works"] },
+    { a: "UN-Habitat", pillar: "P3", activities: ["Resilient urban utilities"], actAgency:["Design"], actUNDP:["Execution/solar"] },
+    { a: "IOM", pillar: "P1", activities: ["Shelter/WASH for returns","Mobility data for targeting"], actAgency:["Shelter/WASH"], actUNDP:["Service rehab"] },
+    { a: "IOM", pillar: "P2", activities: ["Livelihoods/MSME grants"], actAgency:["Cash/Grants"], actUNDP:["MSME support"] },
+    { a: "ILO", pillar: "P2", activities: ["Skills/upskilling","Sector upgrading","Formalization"], actAgency:["Skills & standards"], actUNDP:["Finance/market links"] },
+    { a: "UNRWA", pillar: "P1", activities: ["Camp infrastructure/services","Education/health"], actAgency:["Service delivery"], actUNDP:["Capex upgrades"] },
+    { a: "UNRWA", pillar: "P2", activities: ["PRS youth livelihoods"], actAgency:["Youth services"], actUNDP:["Enterprise grants"] }
+  ];
+  // Aggregated edges: computed via group-by of rawRows
+  let edges = [];
+  const pillarColor = { P1: css('--p1'), P2: css('--p2'), P3: css('--p3') };
+  function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  /**
+   * Aggregate a list of raw rows into edges grouped by Agency × Pillar.
+   *
+   * Instead of using the count of thematic areas as the weight, this
+   * version counts the number of unique UNDP sub‑activities (from
+   * ActivitiesUNDP).  Each edge also records a mapping of thematic
+   * areas (the Activities column) to the corresponding UNDP
+   * sub‑activities, allowing the tooltip to break down contributions
+   * by theme.
+   */
+  function aggregateEdges(rows){
+    const groups = {};
+    rows.forEach(item => {
+      const key = item.a + '||' + item.pillar;
+      if(!groups[key]){
+        groups[key] = {
+          a: item.a,
+          pillar: item.pillar,
+          themes: new Set(),
+          actAgency: new Set(),
+          actUNDP: new Set(),
+          themeMap: {}
+        };
+      }
+      // Parse the list of themes for this row (Activities column)
+      const themes = item.activities || [];
+      const subActs = item.actUNDP || [];
+      // Collect each theme and map UNDP sub‑activities to themes
+      themes.forEach(theme => {
+        const t = theme && theme.trim();
+        if(!t) return;
+        groups[key].themes.add(t);
+        if(!groups[key].themeMap[t]) groups[key].themeMap[t] = new Set();
+        subActs.forEach(sa => {
+          const s = sa && sa.trim(); if(!s) return;
+          groups[key].themeMap[t].add(s);
+          groups[key].actUNDP.add(s);
+        });
+      });
+      // Aggregate Agency roles and UNDP sub‑activities sets
+      item.actAgency.forEach(r => { const clean = r && r.trim(); if(clean) groups[key].actAgency.add(clean); });
+      // If there are sub‑activities not mapped to any theme (e.g. no Activities), still collect them
+      if(themes.length === 0) {
+        subActs.forEach(sa => { const s = sa && sa.trim(); if(s) groups[key].actUNDP.add(s); });
+      }
+    });
+    const result = [];
+    Object.values(groups).forEach(g => {
+      // Convert themeMap sets to arrays
+      const tm = {};
+      Object.keys(g.themeMap).forEach(t => { tm[t] = Array.from(g.themeMap[t]); });
+      result.push({
+        a: g.a,
+        pillar: g.pillar,
+        weight: g.actUNDP.size || 1,
+        activities: Array.from(g.themes),
+        actAgency: Array.from(g.actAgency),
+        actUNDP: Array.from(g.actUNDP),
+        themeMap: tm
+      });
+    });
+    return result;
+  }
+
+  // Build agency checklist
+  const agencyList = document.getElementById('agencyList');
+  function buildAgencyChecklist(){
+    agencyList.innerHTML = '';
+    agencies.forEach(a => {
+      const id = 'ag_'+a.name.replace(/\W+/g,'_');
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="checkbox" id="${id}" checked /> ${a.name}`;
+      agencyList.appendChild(label);
+      a._checkboxId = id;
+      document.getElementById(id).addEventListener('change', update);
+    });
+  }
+  buildAgencyChecklist();
+  document.getElementById('selectAll').onclick = () => agencies.forEach(a => document.getElementById(a._checkboxId).checked = true) || update();
+  document.getElementById('selectNone').onclick = () => agencies.forEach(a => document.getElementById(a._checkboxId).checked = false) || update();
+  ['p1','p2','p3'].forEach(id => document.getElementById(id).addEventListener('change', update));
+
+  // Set up SVG layout
+  const chartEl = document.getElementById('chart');
+  const width = chartEl.clientWidth - 24;
+  // Use let for height, cy and R so they can be adjusted when collapsing/expanding the controls panel
+  let height = 680;
+  const svg = d3.select('#chart').append('svg').attr('width', width).attr('height', height);
+  const cx = width/2;
+  let cy = height/2;
+  let R = Math.min(width, height)*0.42;
+  const undpAngle = Math.PI;
+  // UNDP node position will be recalculated on resize
+  const undp = { name:'UNDP', x: cx + R*Math.cos(undpAngle), y: cy + R*Math.sin(undpAngle) };
+  const start = -Math.PI/3, end = Math.PI/3;
+  const tooltip = d3.select('#tooltip');
+  // Control points for curves by pillar (vertical offsets are relative to cy and will be recalculated on resize)
+  let ctrlOffset = { P1: [cx+10, cy-90], P2: [cx, cy], P3: [cx+10, cy+90] };
+  const widthScale = d3.scaleLinear().range([2, 9]);
+
+  // Position agencies evenly on the right arc of the circle
+  function positionAgencies(){
+    const angles = d3.scaleLinear().domain([0, agencies.length-1]).range([start, end]);
+    agencies.forEach((d, i) => {
+      const a = angles(i);
+      d.x = cx + R*Math.cos(a);
+      d.y = cy + R*Math.sin(a);
+    });
+  }
+  positionAgencies();
+
+  // Create nodes for UNDP and agencies
+  let nodes = [undp, ...agencies];
+  let nodeSel = svg.selectAll('g.node').data(nodes).enter().append('g')
+    .attr('class', d => 'node' + (d.name==='UNDP' ? ' central' : ''))
+    .attr('transform', d => `translate(${d.x},${d.y})`);
+  nodeSel.append('circle').attr('r', d => d.name==='UNDP' ? 16 : 12);
+  nodeSel.append('text')
+    .attr('text-anchor', d => d.name==='UNDP' ? 'end' : 'start')
+    .attr('dx', d => d.name==='UNDP' ? -20 : 16)
+    .attr('dy', 4)
+    .text(d => d.name);
+  // Tooltip and highlight events on nodes
+  nodeSel.on('mouseenter', (ev, d) => highlight(d.name));
+  nodeSel.on('mouseleave', clearHighlight);
+  nodeSel.on('mousemove', (ev, d) => {
+    if(d.name==='UNDP'){ showTip(ev, '<b>UNDP</b> – central node'); return; }
+    const total = d3.sum(edges.filter(e => e.a === d.name), e => e.weight);
+    const lines = edges.filter(e => e.a === d.name).map(e => `${e.pillar}: ${e.weight}`);
+    showTip(ev, `<b>${d.name}</b><br>Total overlaps: <b>${total}</b><br>${lines.join(' | ')}`);
+  });
+  nodeSel.on('mouseout', hideTip);
+  nodeSel.on('click', (ev, d) => { if(d.name!=='UNDP'){ toggleAgency(d.name); } });
+
+  // Link group
+  const linkG = svg.append('g').attr('class','links');
+  let linkSel = linkG.selectAll('path');
+
+  // Format agency and UNDP roles for tooltip
+  function formatRoles(d){
+    const a = d.actAgency && d.actAgency.length ? `<br><u>Agency</u>: ${d.actAgency.join('; ')}` : '';
+    const u = d.actUNDP && d.actUNDP.length ? `<br><u>UNDP</u>: ${d.actUNDP.join('; ')}` : '';
+    return a + u;
+  }
+
+  // Draw aggregated links
+  function drawLinks(){
+    // Update width scale domain based on current edges
+    widthScale.domain([1, d3.max(edges, d => d.weight) || 1]);
+    linkSel = linkG.selectAll('path').data(edges, d => d.a + '-' + d.pillar);
+    linkSel.exit().remove();
+    const enter = linkSel.enter().append('path').attr('class','link');
+    linkSel = enter.merge(linkSel);
+    linkSel
+      .attr('stroke', d => pillarColor[d.pillar])
+      .attr('stroke-width', d => widthScale(d.weight))
+      .attr('d', d => {
+        const agency = agencies.find(a => a.name === d.a);
+        const ctrl = ctrlOffset[d.pillar];
+        return pathBezier(undp, agency, ctrl);
+      })
+      .on('mousemove', (ev, d) => {
+        // Build tooltip content: count of UNDP sub‑activities and breakdown by theme
+        // Count of overlapping UNDP activities
+        const totalUNDP = d.weight;
+        let themeLines = '';
+        // Break down sub‑activities by each theme (if available)
+        if(d.themeMap && Object.keys(d.themeMap).length){
+          Object.keys(d.themeMap).forEach(theme => {
+            const list = d.themeMap[theme];
+            themeLines += `<br><i>${theme}</i> — ${list.length}<br>`;
+            themeLines += list.map(sa => `&nbsp;&nbsp;• ${sa}`).join('<br>') + '<br>';
+          });
+        }
+        // Clean trailing <br> from themeLines
+        themeLines = themeLines.replace(/<br>$/, '');
+        showTip(ev, `${d.a} ↔ UNDP<br><b>${d.pillar}</b> overlap: <b>${totalUNDP}</b>${themeLines}${formatRoles(d)}`);
+      })
+      .on('mouseleave', hideTip);
+  }
+
+  // Helpers
+  function pathBezier(p0, p2, ctrl){ const [cx1, cy1] = ctrl; return `M${p0.x},${p0.y} Q${cx1},${cy1} ${p2.x},${p2.y}`; }
+  // Position the tooltip so it stays within the viewport.  After updating
+  // the HTML content, measure its dimensions and clamp x/y positions to
+  // ensure the card doesn't overflow the browser window.  A small
+  // padding is applied to keep the tooltip from touching the edges.
+  function showTip(ev, html){
+    // Update tooltip content first so offsetWidth/offsetHeight are accurate
+    tooltip.html(html);
+    // Default position: near cursor with slight offset
+    let x = ev.clientX + 14;
+    let y = ev.clientY + 16;
+    const pad = 12; // padding from viewport edges
+    // Temporarily hide tooltip to measure dimensions without flicker
+    tooltip.style('opacity', 0);
+    // Measure tooltip size
+    const rect = tooltip.node().getBoundingClientRect();
+    const ttWidth = rect.width;
+    const ttHeight = rect.height;
+    const winWidth = window.innerWidth;
+    const winHeight = window.innerHeight;
+    // If tooltip overflows right edge, shift left
+    if (x + ttWidth + pad > winWidth) {
+      x = winWidth - ttWidth - pad;
+    }
+    // If tooltip overflows bottom edge, shift up
+    if (y + ttHeight + pad > winHeight) {
+      y = winHeight - ttHeight - pad;
+    }
+    // Clamp to minimum padding
+    if (x < pad) { x = pad; }
+    if (y < pad) { y = pad; }
+    // Apply final position and reveal
+    tooltip.style('left', x + 'px')
+           .style('top', y + 'px')
+           .style('opacity', 1);
+  }
+  function hideTip(){ tooltip.style('opacity', 0).style('transform','translateY(4px)'); }
+  function highlight(name){ linkSel.classed('dim', l => name !== 'UNDP' && l.a !== name); nodeSel.classed('dim', n => name !== 'UNDP' && n.name !== name && n.name !== 'UNDP'); }
+  function clearHighlight(){ linkSel.classed('dim', false); nodeSel.classed('dim', false); }
+  function selectedPillars(){ return ['p1','p2','p3'].filter(id => document.getElementById(id).checked).map(x => x.toUpperCase()); }
+  function selectedAgencies(){ return agencies.filter(a => document.getElementById(a._checkboxId).checked).map(a => a.name); }
+  function toggleAgency(name){ const cb = document.getElementById(agencies.find(a => a.name === name)._checkboxId); cb.checked = !cb.checked; update(); }
+
+  // Update display based on filters
+  function update(){
+    const pset = new Set(selectedPillars());
+    const aset = new Set(selectedAgencies());
+    linkSel.attr('display', d => (pset.has(d.pillar) && aset.has(d.a)) ? null : 'none');
+    nodeSel.classed('dim', n => {
+      if(n.name === 'UNDP') return false;
+      const hasVisible = edges.some(e => e.a === n.name && pset.has(e.pillar) && aset.has(e.a));
+      return !hasVisible;
+    });
+  }
+
+  // Load a static CSV on page load for public‑ready mode.  The file must be present
+  // at 'data/undp_network.csv' relative to this HTML file.
+  d3.csv('data/undp_network.csv').then(rows => {
+    ingestRows(rows);
+  }).catch(err => {
+    console.error('Failed to load static CSV:', err);
+  });
+
+  // Ingest rows from uploaded file: normalise and aggregate
+  function ingestRows(rows){
+    const norm = s => String(s||'').trim();
+    const mapped = rows.map(r => ({
+      a: norm(r.Agency || r.agency),
+      pillar: norm(r.Pillar || r.pillar).toUpperCase(),
+      activities: norm(r.Activities || r.activities).split(/;+/).map(x => x.trim()).filter(Boolean),
+      actAgency: norm(r.ActivitiesAgency || r.activities_agency || r.agency_activities).split(/;+/).map(x => x.trim()).filter(Boolean),
+      actUNDP: norm(r.ActivitiesUNDP || r.activities_undp || r.undp_activities).split(/;+/).map(x => x.trim()).filter(Boolean)
+    })).filter(d => d.a && ['P1','P2','P3'].includes(d.pillar));
+    const names = Array.from(new Set(mapped.map(d => d.a))).sort();
+    agencies = names.map(n => ({ name:n }));
+    buildAgencyChecklist();
+    edges = aggregateEdges(mapped);
+    // Reposition agencies after list length changes
+    positionAgencies();
+    // Update node selection with new agencies
+    nodes = [undp, ...agencies];
+    nodeSel = svg.selectAll('g.node').data(nodes, d => d.name);
+    nodeSel.exit().remove();
+    const enter = nodeSel.enter().append('g').attr('class', d => 'node' + (d.name==='UNDP' ? ' central' : ''));
+    enter.append('circle').attr('r', d => d.name==='UNDP' ? 16 : 12);
+    enter.append('text')
+      .attr('text-anchor', d => d.name==='UNDP' ? 'end' : 'start')
+      .attr('dx', d => d.name==='UNDP' ? -20 : 16)
+      .attr('dy', 4)
+      .text(d => d.name);
+    nodeSel = enter.merge(nodeSel);
+    nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+    nodeSel.on('mouseenter', (ev, d) => highlight(d.name));
+    nodeSel.on('mouseleave', clearHighlight);
+    nodeSel.on('mousemove', (ev, d) => {
+      if(d.name==='UNDP'){
+        showTip(ev, '<b>UNDP</b> – central node'); return;
+      }
+      const total = d3.sum(edges.filter(e => e.a === d.name), e => e.weight);
+      const lines = edges.filter(e => e.a === d.name).map(e => `${e.pillar}: ${e.weight}`);
+      showTip(ev, `<b>${d.name}</b><br>Total overlaps: <b>${total}</b><br>${lines.join(' | ')}`);
+    });
+    nodeSel.on('mouseout', hideTip);
+    nodeSel.on('click', (ev, d) => { if(d.name!=='UNDP'){ toggleAgency(d.name); } });
+    drawLinks();
+    update();
+  }
+
+  // ------------------------------------------------------------
+  // Collapse/expand controls panel and resize chart
+
+  /**
+   * Resize the chart when the controls are collapsed or expanded.  When
+   * collapsed, the available vertical space increases, so we adjust
+   * the SVG height, recompute the radial layout (cy, R, control
+   * points), reposition the UNDP node and agencies, and redraw
+   * everything.  When expanded, we restore the default height (680).
+   */
+  function resizeChart() {
+    const collapsed = document.body.classList.contains('collapsed');
+    let newHeight;
+    const chartRect = chartEl.getBoundingClientRect();
+    if (collapsed) {
+      newHeight = window.innerHeight - chartRect.top - 20;
+    } else {
+      newHeight = 680;
+    }
+    height = newHeight;
+    cy = height / 2;
+    R = Math.min(width, height) * 0.42;
+    const offset = height * 0.13;
+    ctrlOffset = { P1: [cx + 10, cy - offset], P2: [cx, cy], P3: [cx + 10, cy + offset] };
+    undp.x = cx + R * Math.cos(Math.PI);
+    undp.y = cy + R * Math.sin(Math.PI);
+    // Resize the SVG element
+    svg.attr('height', height);
+    // Reposition agencies and update node positions
+    positionAgencies();
+    nodeSel.attr('transform', d => {
+      if (d.name === 'UNDP') {
+        return `translate(${undp.x},${undp.y})`;
+      }
+      return `translate(${d.x},${d.y})`;
+    });
+    // Redraw links and update highlight states
+    drawLinks();
+    update();
+  }
+
+  // Toggle collapse button handler
+  const toggleBtn = document.getElementById('toggleControls');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', () => {
+      const collapsed = document.body.classList.toggle('collapsed');
+      toggleBtn.textContent = collapsed ? 'Show controls' : 'Hide controls';
+      // Hide or show the controls container via inline style so that tooltips have room
+      const controlsEl = document.getElementById('controls');
+      if (controlsEl) {
+        controlsEl.style.display = collapsed ? 'none' : '';
+      }
+      resizeChart();
+    });
+  }
+
+  // Removed initial aggregation of demo rows.  Edges will be loaded from the static CSV.
+
+  // Ensure the controls panel is visible on initial load and the toggle
+  // button has the correct text.  Without this, the button text may
+  // start in an inconsistent state due to the collapsed class being
+  // toggled in a previous session.
+  (function(){
+    document.body.classList.remove('collapsed');
+    const controlsEl = document.getElementById('controls');
+    if (controlsEl) controlsEl.style.display = '';
+    const tbtn = document.getElementById('toggleControls');
+    if (tbtn) tbtn.textContent = 'Hide controls';
+  })();
+  </script>
+</body>
+</html>
